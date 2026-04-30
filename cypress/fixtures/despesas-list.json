@@ -1,0 +1,27 @@
+{
+  "total": 2,
+  "page": 1,
+  "page_size": 20,
+  "items": [
+    {
+      "id": "uuid-despesa-1",
+      "data_despesa": "2026-04-27",
+      "estabelecimento": "Supermercado Teste",
+      "categoria_despesa_id": "cat-uuid-1",
+      "valor_total": "150.00",
+      "observacao": null,
+      "data_cadastro": "2026-04-27T10:00:00",
+      "data_alteracao": "2026-04-27T10:00:00"
+    },
+    {
+      "id": "uuid-despesa-2",
+      "data_despesa": "2026-04-26",
+      "estabelecimento": "Farmácia Central",
+      "categoria_despesa_id": "cat-uuid-2",
+      "valor_total": "80.00",
+      "observacao": "Remédios mensais",
+      "data_cadastro": "2026-04-26T15:00:00",
+      "data_alteracao": "2026-04-26T15:00:00"
+    }
+  ]
+}

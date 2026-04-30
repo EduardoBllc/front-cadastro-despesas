@@ -1,0 +1,5 @@
+[
+  { "id": "cat-item-uuid-1", "descricao": "Alimento" },
+  { "id": "cat-item-uuid-2", "descricao": "Bebida" },
+  { "id": "cat-item-uuid-3", "descricao": "Higiene" }
+]

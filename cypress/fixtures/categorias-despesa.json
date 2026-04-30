@@ -1,0 +1,5 @@
+[
+  { "id": "cat-uuid-1", "descricao": "Alimentação" },
+  { "id": "cat-uuid-2", "descricao": "Saúde" },
+  { "id": "cat-uuid-3", "descricao": "Combustível" }
+]
