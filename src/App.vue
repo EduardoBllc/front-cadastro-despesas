@@ -12,20 +12,36 @@ import {
   listarCategoriasDespesa, criarCategoriaDespesa, atualizarCategoriaDespesa, deletarCategoriaDespesa,
   listarCategoriasItem, criarCategoriaItem, atualizarCategoriaItem, deletarCategoriaItem,
 } from './api/categorias'
+import { obterDespesa } from './api/despesas'
+import type { DespesaDetalhe } from './types/api'
 
 type Section = 'despesas' | 'categorias-despesa' | 'categorias-item' | 'itens' | 'carros' | 'estabelecimentos' | 'tipos-estabelecimento' | 'configuracoes'
 const section = ref<Section>('despesas')
-const despesaView = ref<'lista' | 'nova'>('lista')
+const despesaView = ref<'lista' | 'nova' | 'editar'>('lista')
 const listKey = ref(0)
+const despesaParaEditar = ref<DespesaDetalhe | null>(null)
+const carregandoEditar = ref(false)
 
 function navTo(s: Section) {
   section.value = s
   despesaView.value = 'lista'
+  despesaParaEditar.value = null
+}
+
+async function handleEditar(id: string) {
+  carregandoEditar.value = true
+  try {
+    despesaParaEditar.value = await obterDespesa(id)
+    despesaView.value = 'editar'
+  } finally {
+    carregandoEditar.value = false
+  }
 }
 
 function onSaved() {
   listKey.value++
   despesaView.value = 'lista'
+  despesaParaEditar.value = null
 }
 
 const navItems: { key: Section; label: string }[] = [
@@ -70,11 +86,19 @@ const navItems: { key: Section; label: string }[] = [
           v-if="despesaView === 'lista'"
           :key="listKey"
           @nova="despesaView = 'nova'"
+          @editar="handleEditar"
         />
+        <div v-else-if="carregandoEditar" class="text-center py-12 text-gray-400">Carregando...</div>
         <DespesaForm
-          v-else
+          v-else-if="despesaView === 'nova'"
           @saved="onSaved"
           @cancel="despesaView = 'lista'"
+        />
+        <DespesaForm
+          v-else-if="despesaView === 'editar' && despesaParaEditar"
+          :despesa="despesaParaEditar"
+          @saved="onSaved"
+          @cancel="() => { despesaView = 'lista'; despesaParaEditar = null }"
         />
       </template>
 
