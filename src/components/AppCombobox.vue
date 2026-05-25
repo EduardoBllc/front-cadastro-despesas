@@ -31,8 +31,8 @@ const selectedOption = computed(() =>
 // Quando a opção selecionada muda (ou a lista de opções é atualizada),
 // sincronizamos o campo de texto se o dropdown estiver fechado.
 watch([selectedOption, () => props.options], ([newOpt]) => {
-  if (newOpt && !isOpen.value) {
-    searchQuery.value = newOpt.descricao
+  if (!isOpen.value) {
+    searchQuery.value = newOpt ? newOpt.descricao : ''
   }
 }, { immediate: true, deep: true })
 

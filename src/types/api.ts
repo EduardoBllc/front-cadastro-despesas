@@ -154,10 +154,34 @@ export interface CriarItemPayload {
 }
 
 export interface ItemFormState {
+  id?: string
   item_id: string
   unidade_medida_id: string
   quantidade: string
   valor_unitario: string
+}
+
+export interface ItemDespesaParaAtualizar {
+  id?: string
+  item_id: string
+  quantidade: string
+  valor_unitario: string
+}
+
+export interface AtualizarDespesaPayload {
+  estabelecimento_id?: string
+  categoria_despesa_id?: string
+  valor_total?: string
+  data_despesa?: string
+  observacao?: string
+  itens?: ItemDespesaParaAtualizar[]
+}
+
+export interface AtualizarAbastecimentoPayload {
+  carro_id?: string
+  quilometragem?: number
+  litros?: string
+  observacao?: string
 }
 
 export interface CriarAbastecimentoPayload {

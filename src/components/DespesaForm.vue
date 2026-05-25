@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch, computed } from 'vue'
-import { criarDespesa } from '@/api/despesas'
+import { ref, reactive, onMounted, watch, computed, nextTick } from 'vue'
+import { criarDespesa, atualizarDespesa, atualizarAbastecimento } from '@/api/despesas'
 import { listarCategoriasDespesa, listarCategoriasItem, criarCategoriaDespesa, criarCategoriaItem } from '@/api/categorias'
 import { listarEstabelecimentos, criarEstabelecimento, listarTiposEstabelecimento, criarTipoEstabelecimento } from '@/api/estabelecimentos'
 import { listarItens, criarItem } from '@/api/itens'
@@ -13,9 +13,11 @@ import ItemFormRow from './ItemFormRow.vue'
 import AppCombobox from './AppCombobox.vue'
 import type {
   Carro, CategoriaDespesa, CategoriaItem, CriarDespesaPayload, CriarItemPayload,
-  Estabelecimento, Item, ItemFormState, TipoEstabelecimento, UnidadeMedida
+  DespesaDetalhe, Estabelecimento, Item, ItemDespesaParaAtualizar, ItemFormState,
+  TipoEstabelecimento, UnidadeMedida,
 } from '@/types/api'
 
+const props = defineProps<{ despesa?: DespesaDetalhe }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
 
 const categoriasDespesa = ref<CategoriaDespesa[]>([])
@@ -28,9 +30,14 @@ const carros = ref<Carro[]>([])
 
 const categoriaAbastecimentoId = ref('')
 const tipoEstabelecimentoPostoId = ref('')
+const medidaUnitarioId = ref('')
+const valorPadraoUnitario = ref('')
+const autopreencheUnitarioQuantidade = ref(false)
+const autopreencheUnitarioItem = ref(false)
 const configsCarregadas = ref(false)
 
 const eAbastecimento = ref(false)
+const inicializando = ref(false)
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -86,6 +93,7 @@ const valorPorLitro = computed(() => {
 })
 
 watch(eAbastecimento, (isAbast) => {
+  if (inicializando.value) return
   if (isAbast) {
     form.categoria_despesa_id = categoriaAbastecimentoId.value
     // Se o estabelecimento atual não é um posto, limpa
@@ -106,7 +114,7 @@ watch(eAbastecimento, (isAbast) => {
 
 watch(() => form.estabelecimento_id, (id) => {
   if (timeoutSugestaoCategoriaDespesa) clearTimeout(timeoutSugestaoCategoriaDespesa)
-  if (eAbastecimento.value) return  // categoria já foi definida pela config
+  if (inicializando.value || eAbastecimento.value) return  // categoria já foi definida pela config ou inicialização de edição
   const est = estabelecimentos.value.find(e => e.id === id)
   if (est) {
     timeoutSugestaoCategoriaDespesa = setTimeout(async () => {
@@ -124,7 +132,13 @@ watch(() => form.estabelecimento_id, (id) => {
   }
 })
 
-const itens = ref<ItemFormState[]>([])
+const itens = ref<ItemFormState[]>([{ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' }])
+
+function eItemVazio(item: ItemFormState): boolean {
+  return !item.item_id && !item.quantidade && !item.valor_unitario
+}
+
+const temItensPreenchidos = computed(() => itens.value.some(i => !eItemVazio(i)))
 
 const totalDosItens = computed(() => {
   return itens.value.reduce((acc, item) => {
@@ -134,17 +148,50 @@ const totalDosItens = computed(() => {
   }, 0)
 })
 
+watch(itens, () => {
+  const ultimo = itens.value[itens.value.length - 1]
+  if (!ultimo || !eItemVazio(ultimo)) {
+    itens.value.push({ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' })
+  }
+}, { deep: true })
+
 watch(totalDosItens, (novoTotal) => {
-  if (itens.value.length > 0) {
+  if (temItensPreenchidos.value) {
     form.valor_total = novoTotal.toFixed(2)
   }
 })
 
-watch(() => itens.value.length, (novaQuantidade) => {
-  if (novaQuantidade === 0) {
-    form.valor_total = ''
-  }
+watch(temItensPreenchidos, (tem) => {
+  if (!tem) form.valor_total = ''
 })
+
+function popularFormulario() {
+  const d = props.despesa!
+  form.estabelecimento_id = d.estabelecimento_id
+  form.categoria_despesa_id = d.categoria_despesa_id
+  form.valor_total = d.valor_total
+  form.data_despesa = d.data_despesa
+  form.observacao = d.observacao ?? ''
+
+  itens.value = [
+    ...d.itens.map(item => ({
+      id: item.id,
+      item_id: item.item_id ?? '',
+      unidade_medida_id: item.item?.unidade_medida_id ?? '',
+      quantidade: item.quantidade,
+      valor_unitario: item.valor_unitario,
+    })),
+    { item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' },
+  ]
+
+  if (d.abastecimento) {
+    eAbastecimento.value = true
+    abastecimento.carro_id = d.abastecimento.carro_id
+    abastecimento.quilometragem = String(d.abastecimento.quilometragem)
+    abastecimento.litros = d.abastecimento.litros
+    abastecimento.observacao = d.abastecimento.observacao ?? ''
+  }
+}
 
 onMounted(async () => {
   const [cats, catsItem, unds, itensAtivos, ests, tipos, carrosList, configs] = await Promise.all([
@@ -167,14 +214,25 @@ onMounted(async () => {
 
   const catConf = configs.find(c => c.chave === 'categoria_abastecimento_id')
   const tipoConf = configs.find(c => c.chave === 'tipo_estabelecimento_posto_id')
+  const medidaConf = configs.find(c => c.chave === 'medida_unitario_id')
+  const valorConf = configs.find(c => c.chave === 'valor_padrao_unitario')
+  const autoQtdConf = configs.find(c => c.chave === 'autopreenche_unitario_quantidade')
+  const autoItemConf = configs.find(c => c.chave === 'autopreenche_unitario_item')
   categoriaAbastecimentoId.value = catConf?.valor ?? ''
   tipoEstabelecimentoPostoId.value = tipoConf?.valor ?? ''
+  medidaUnitarioId.value = medidaConf?.valor ?? ''
+  valorPadraoUnitario.value = valorConf?.valor ?? ''
+  autopreencheUnitarioQuantidade.value = String(autoQtdConf?.valor).toLowerCase() === 'true'
+  autopreencheUnitarioItem.value = String(autoItemConf?.valor).toLowerCase() === 'true'
   configsCarregadas.value = true
-})
 
-function addItem() {
-  itens.value.push({ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' })
-}
+  if (props.despesa) {
+    inicializando.value = true
+    popularFormulario()
+    await nextTick()
+    inicializando.value = false
+  }
+})
 
 function removeItem(index: number) {
   itens.value.splice(index, 1)
@@ -220,7 +278,9 @@ async function handleCriarTipoEstabelecimentoNoModal(descricao: string) {
 function iniciarCriacaoItem(descricao: string, unidadeMedidaId: string, index: number) {
   novoItem.descricao = descricao
   novoItem.categoria_item_id = ''
-  novoItem.unidade_medida_id = unidadeMedidaId
+  novoItem.unidade_medida_id = autopreencheUnitarioItem.value && medidaUnitarioId.value
+    ? medidaUnitarioId.value
+    : unidadeMedidaId
   indiceItemPendente.value = index
   mostrandoModalItem.value = true
 
@@ -292,40 +352,109 @@ async function handleCreateCategoriaNoModal(descricao: string) {
   }
 }
 
+async function resolveItemId(formItem: ItemFormState): Promise<string> {
+  const selectedItem = itensDisponiveis.value.find(i => i.id === formItem.item_id)
+  if (!selectedItem) return formItem.item_id
+
+  const unitEqual = (selectedItem.unidade_medida_id ?? '') === (formItem.unidade_medida_id ?? '')
+  if (unitEqual) return formItem.item_id
+
+  const variant = itensDisponiveis.value.find(
+    i => i.descricao.toLowerCase() === selectedItem.descricao.toLowerCase() &&
+         (i.unidade_medida_id ?? '') === (formItem.unidade_medida_id ?? '') &&
+         i.id !== selectedItem.id
+  )
+  if (variant) return variant.id
+
+  const newItem = await criarItem({
+    descricao: selectedItem.descricao,
+    categoria_item_id: selectedItem.categoria_item_id,
+    unidade_medida_id: formItem.unidade_medida_id || null,
+  })
+  itensDisponiveis.value.push(newItem)
+  return newItem.id
+}
+
 async function resolveItens(): Promise<CriarItemPayload[]> {
   const result: CriarItemPayload[] = []
-  for (const formItem of itens.value) {
-    const selectedItem = itensDisponiveis.value.find(i => i.id === formItem.item_id)
-    if (!selectedItem) {
-      result.push({ item_id: formItem.item_id, quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario })
-      continue
-    }
-    const unitEqual = (selectedItem.unidade_medida_id ?? '') === (formItem.unidade_medida_id ?? '')
-    if (unitEqual) {
-      result.push({ item_id: formItem.item_id, quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario })
-    } else {
-      const variant = itensDisponiveis.value.find(
-        i => i.descricao.toLowerCase() === selectedItem.descricao.toLowerCase() &&
-             (i.unidade_medida_id ?? '') === (formItem.unidade_medida_id ?? '') &&
-             i.id !== selectedItem.id
-      )
-      if (variant) {
-        result.push({ item_id: variant.id, quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario })
-      } else {
-        const newItem = await criarItem({
-          descricao: selectedItem.descricao,
-          categoria_item_id: selectedItem.categoria_item_id,
-          unidade_medida_id: formItem.unidade_medida_id || null,
-        })
-        itensDisponiveis.value.push(newItem)
-        result.push({ item_id: newItem.id, quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario })
-      }
-    }
+  for (const formItem of itens.value.filter(i => !eItemVazio(i))) {
+    result.push({ item_id: await resolveItemId(formItem), quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario })
   }
   return result
 }
 
+async function resolveItensParaEdicao(): Promise<ItemDespesaParaAtualizar[]> {
+  const result: ItemDespesaParaAtualizar[] = []
+  for (const formItem of itens.value.filter(i => !eItemVazio(i))) {
+    result.push({ id: formItem.id, item_id: await resolveItemId(formItem), quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario })
+  }
+  return result
+}
+
+function resetForm() {
+  form.estabelecimento_id = ''
+  form.categoria_despesa_id = ''
+  form.valor_total = ''
+  form.data_despesa = getCurrentISODate()
+  form.observacao = ''
+  eAbastecimento.value = false
+  abastecimento.carro_id = ''
+  abastecimento.quilometragem = ''
+  abastecimento.litros = ''
+  abastecimento.observacao = ''
+  itens.value = [{ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' }]
+  error.value = null
+}
+
 async function handleSubmit() {
+  loading.value = true
+  error.value = null
+  try {
+    if (props.despesa) {
+      const resolvedItens = await resolveItensParaEdicao()
+      await atualizarDespesa(props.despesa.id, {
+        estabelecimento_id: form.estabelecimento_id,
+        categoria_despesa_id: form.categoria_despesa_id,
+        valor_total: form.valor_total,
+        data_despesa: form.data_despesa,
+        observacao: form.observacao || undefined,
+        itens: resolvedItens,
+      })
+      if (props.despesa.abastecimento && eAbastecimento.value) {
+        await atualizarAbastecimento(props.despesa.id, {
+          carro_id: abastecimento.carro_id,
+          quilometragem: parseInt(abastecimento.quilometragem),
+          litros: abastecimento.litros,
+          observacao: abastecimento.observacao || undefined,
+        })
+      }
+    } else {
+      const resolvedItens = await resolveItens()
+      const payload: CriarDespesaPayload = {
+        estabelecimento_id: form.estabelecimento_id,
+        categoria_despesa_id: form.categoria_despesa_id,
+        valor_total: form.valor_total,
+        data_despesa: form.data_despesa,
+        observacao: form.observacao || undefined,
+        itens: resolvedItens,
+        abastecimento: eAbastecimento.value ? {
+          carro_id: abastecimento.carro_id,
+          quilometragem: parseInt(abastecimento.quilometragem),
+          litros: abastecimento.litros,
+          observacao: abastecimento.observacao || undefined,
+        } : undefined,
+      }
+      await criarDespesa(payload)
+    }
+    emit('saved')
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Erro ao salvar despesa'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleSalvarEComecarOutra() {
   loading.value = true
   error.value = null
   try {
@@ -345,7 +474,7 @@ async function handleSubmit() {
       } : undefined,
     }
     await criarDespesa(payload)
-    emit('saved')
+    resetForm()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Erro ao salvar despesa'
   } finally {
@@ -426,13 +555,13 @@ async function handleSubmit() {
       <button @click="emit('cancel')" class="text-gray-400 hover:text-gray-600 transition-colors text-sm">
         ← Voltar
       </button>
-      <h2 class="text-2xl font-bold text-gray-800">Nova Despesa</h2>
+      <h2 class="text-2xl font-bold text-gray-800">{{ props.despesa ? 'Editar Despesa' : 'Nova Despesa' }}</h2>
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6" data-cy="despesa-form">
-      <!-- Toggle abastecimento -->
+      <!-- Toggle abastecimento (apenas em criação) -->
       <div
-        v-if="configsCarregadas && categoriaAbastecimentoId && tipoEstabelecimentoPostoId"
+        v-if="!props.despesa && configsCarregadas && categoriaAbastecimentoId && tipoEstabelecimentoPostoId"
         class="bg-white rounded-xl shadow-sm px-6 py-4 flex items-center justify-between"
       >
         <div>
@@ -510,13 +639,13 @@ async function handleSubmit() {
               min="0.01"
               step="0.01"
               placeholder="0,00"
-              :readonly="itens.length > 0"
+              :readonly="temItensPreenchidos"
               :class="[
                 'block w-full rounded-lg border-gray-300 px-4 py-2.5 text-sm shadow-sm transition-colors focus:border-blue-500 focus:ring-blue-500',
-                itens.length > 0 ? 'bg-gray-100 cursor-not-allowed font-semibold text-gray-600' : 'bg-gray-50/30'
+                temItensPreenchidos ? 'bg-gray-100 cursor-not-allowed font-semibold text-gray-600' : 'bg-gray-50/30'
               ]"
             />
-            <p v-if="itens.length > 0" class="mt-1 text-[10px] text-gray-400 uppercase tracking-wider">
+            <p v-if="temItensPreenchidos" class="mt-1 text-[10px] text-gray-400 uppercase tracking-wider">
               Calculado automaticamente pelos itens
             </p>
           </div>
@@ -599,17 +728,9 @@ async function handleSubmit() {
       <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h3 class="font-semibold text-gray-700 text-sm uppercase tracking-wide">Itens</h3>
-          <button type="button" data-cy="btn-add-item" @click="addItem"
-            class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors">
-            + Adicionar Item
-          </button>
         </div>
 
-        <div v-if="itens.length === 0" class="text-center py-4 text-gray-400 text-sm">
-          Nenhum item adicionado.
-        </div>
-
-        <div v-if="itens.length > 0" class="grid grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-500">
+        <div class="grid grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-500">
           <span class="col-span-3">Item</span>
           <span class="col-span-2">Unidade</span>
           <span class="col-span-2">Quantidade</span>
@@ -625,6 +746,10 @@ async function handleSubmit() {
             v-model="itens[index]"
             :itens="itensDisponiveis"
             :unidades="unidadesMedida"
+            :removable="index < itens.length - 1"
+            :medida-unitario-id="medidaUnitarioId"
+            :valor-padrao-unitario="valorPadraoUnitario"
+            :autopreenche-unitario-quantidade="autopreencheUnitarioQuantidade"
             @remove="removeItem(index)"
             @create-item="(desc, unit) => iniciarCriacaoItem(desc, unit, index)"
             @create-unidade="handleCriarUnidadeNoModal"
@@ -639,9 +764,18 @@ async function handleSubmit() {
           class="px-6 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
           Cancelar
         </button>
+        <button
+          v-if="!props.despesa"
+          type="button"
+          data-cy="btn-submit-and-new"
+          :disabled="loading"
+          @click="handleSalvarEComecarOutra"
+          class="px-6 py-2 text-sm bg-white hover:bg-gray-50 text-blue-600 border border-blue-300 rounded-lg font-medium disabled:opacity-50 transition-colors">
+          {{ loading ? 'Salvando...' : 'Salvar e Começar Outra' }}
+        </button>
         <button type="submit" data-cy="btn-submit" :disabled="loading"
           class="px-6 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 transition-colors">
-          {{ loading ? 'Salvando...' : 'Salvar Despesa' }}
+          {{ loading ? 'Salvando...' : props.despesa ? 'Salvar Alterações' : 'Salvar Despesa' }}
         </button>
       </div>
     </form>

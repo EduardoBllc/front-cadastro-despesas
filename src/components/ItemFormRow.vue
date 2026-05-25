@@ -8,6 +8,10 @@ const model = defineModel<ItemFormState>({ required: true })
 const props = defineProps<{
   itens: Item[]
   unidades: UnidadeMedida[]
+  removable?: boolean
+  medidaUnitarioId?: string
+  valorPadraoUnitario?: string
+  autopreencheUnitarioQuantidade?: boolean
 }>()
 const emit = defineEmits<{
   remove: []
@@ -40,6 +44,14 @@ watch(() => model.value.item_id, (newId) => {
     if (!model.value.valor_unitario) {
       model.value.valor_unitario = item.valor_referencia ?? ''
     }
+    if (
+      props.autopreencheUnitarioQuantidade &&
+      props.medidaUnitarioId &&
+      item.unidade_medida_id === props.medidaUnitarioId &&
+      !model.value.quantidade
+    ) {
+      model.value.quantidade = props.valorPadraoUnitario ?? '1'
+    }
   } else {
     model.value.unidade_medida_id = ''
   }
@@ -59,7 +71,7 @@ const valorTotal = computed(() => {
         v-model="model.item_id"
         :options="opcoesItens"
         placeholder="Item"
-        required
+        :required="props.removable !== false"
         data-cy="item-descricao"
         @create="(desc) => emit('create-item', desc, model.unidade_medida_id)"
       />
@@ -78,9 +90,9 @@ const valorTotal = computed(() => {
         v-model="model.quantidade"
         data-cy="item-quantidade"
         type="number"
-        required
-        min="0.01"
-        step="0.01"
+        :required="props.removable !== false"
+        min="0.001"
+        step="0.001"
         placeholder="Qtd"
         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
       />
@@ -90,7 +102,7 @@ const valorTotal = computed(() => {
         v-model="model.valor_unitario"
         data-cy="item-valor-unitario"
         type="number"
-        required
+        :required="props.removable !== false"
         min="0.01"
         step="0.01"
         placeholder="R$ unit."
@@ -108,6 +120,7 @@ const valorTotal = computed(() => {
     </div>
     <div class="col-span-1 flex justify-center pt-1.5">
       <button
+        v-if="props.removable !== false"
         type="button"
         data-cy="item-remove"
         @click="emit('remove')"

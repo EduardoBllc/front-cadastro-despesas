@@ -4,8 +4,9 @@ import { listarDespesas, deletarDespesa } from '@/api/despesas'
 import { formatDate, formatCurrency } from '@/utils/format'
 import type { DespesaLista, PaginatedResponse } from '@/types/api'
 import DespesaDetalhesModal from './DespesaDetalhesModal.vue'
+import ActionButton from './ActionButton.vue'
 
-const emit = defineEmits<{ nova: [] }>()
+const emit = defineEmits<{ nova: []; editar: [id: string] }>()
 
 const state = ref<PaginatedResponse<DespesaLista>>({
   total: 0,
@@ -111,21 +112,23 @@ const totalPages = () => Math.ceil(state.value.total / state.value.page_size)
               </td>
               <td class="px-4 py-3 text-right">
                 <div class="flex justify-end gap-2">
-                  <button
-                    @click="despesaDetalhesId = item.id"
+                  <ActionButton
+                    variant="editar"
+                    data-cy="btn-editar-despesa"
+                    @click="emit('editar', item.id)"
+                  />
+                  <ActionButton
+                    variant="detalhes"
                     data-cy="btn-detalhes-despesa"
-                    class="text-xs px-3 py-1 border border-blue-200 text-blue-600 rounded hover:bg-blue-50 transition-colors"
-                  >
-                    Detalhes
-                  </button>
-                  <button
-                    @click="handleDeletar(item.id)"
-                    :disabled="deletandoId === item.id"
+                    @click="despesaDetalhesId = item.id"
+                  />
+                  <ActionButton
+                    variant="excluir"
                     data-cy="btn-deletar-despesa"
-                    class="text-xs px-3 py-1 border border-red-200 text-red-600 rounded hover:bg-red-50 disabled:opacity-50 transition-colors"
-                  >
-                    {{ deletandoId === item.id ? '...' : 'Excluir' }}
-                  </button>
+                    :loading="deletandoId === item.id"
+                    :disabled="deletandoId === item.id"
+                    @click="handleDeletar(item.id)"
+                  />
                 </div>
               </td>
             </tr>
