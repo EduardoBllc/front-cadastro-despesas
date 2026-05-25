@@ -8,6 +8,7 @@ import CrudEstabelecimento from './components/CrudEstabelecimento.vue'
 import CrudTipoEstabelecimento from './components/CrudTipoEstabelecimento.vue'
 import CrudItem from './components/CrudItem.vue'
 import ConfiguracaoAbastecimento from './components/ConfiguracaoAbastecimento.vue'
+import ConfiguracaoUnitario from './components/ConfiguracaoUnitario.vue'
 import {
   listarCategoriasDespesa, criarCategoriaDespesa, atualizarCategoriaDespesa, deletarCategoriaDespesa,
   listarCategoriasItem, criarCategoriaItem, atualizarCategoriaItem, deletarCategoriaItem,
@@ -144,8 +145,16 @@ const navItems: { key: Section; label: string }[] = [
 
       <template v-else-if="section === 'configuracoes'">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">Configurações</h2>
-        <h3 class="text-base font-semibold text-gray-600 mb-4">Abastecimento</h3>
-        <ConfiguracaoAbastecimento />
+        <div class="flex flex-wrap gap-8 items-start">
+          <div class="flex-1 min-w-0">
+            <h3 class="text-base font-semibold text-gray-600 mb-4">Abastecimento</h3>
+            <ConfiguracaoAbastecimento />
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-base font-semibold text-gray-600 mb-4">Itens Unitários</h3>
+            <ConfiguracaoUnitario />
+          </div>
+        </div>
       </template>
     </main>
   </div>
