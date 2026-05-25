@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { listarCarros, criarCarro, atualizarCarro, deletarCarro } from '@/api/carros'
 import type { Carro } from '@/types/api'
+import ActionButton from './ActionButton.vue'
 
 const itens = ref<Carro[]>([])
 const loading = ref(false)
@@ -195,19 +196,13 @@ async function handleDeletar(id: string) {
               </td>
               <td class="px-4 py-3">
                 <div class="flex gap-2 justify-end">
-                  <button
-                    @click="iniciarEdicao(item)"
-                    class="text-xs px-3 py-1 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 transition-colors"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    @click="handleDeletar(item.id)"
+                  <ActionButton variant="editar" @click="iniciarEdicao(item)" />
+                  <ActionButton
+                    variant="excluir"
+                    :loading="deletandoId === item.id"
                     :disabled="deletandoId === item.id"
-                    class="text-xs px-3 py-1 border border-red-200 text-red-600 rounded hover:bg-red-50 disabled:opacity-50 transition-colors"
-                  >
-                    {{ deletandoId === item.id ? '...' : 'Excluir' }}
-                  </button>
+                    @click="handleDeletar(item.id)"
+                  />
                 </div>
               </td>
             </template>

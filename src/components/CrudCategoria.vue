@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import ActionButton from './ActionButton.vue'
 
 type Categoria = { id: string; descricao: string }
 
@@ -158,19 +159,13 @@ async function handleDeletar(id: string) {
                 </button>
               </div>
               <div v-else class="flex gap-2 justify-end">
-                <button
-                  @click="iniciarEdicao(item)"
-                  class="text-xs px-3 py-1 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 transition-colors"
-                >
-                  Editar
-                </button>
-                <button
-                  @click="handleDeletar(item.id)"
+                <ActionButton variant="editar" @click="iniciarEdicao(item)" />
+                <ActionButton
+                  variant="excluir"
+                  :loading="deletandoId === item.id"
                   :disabled="deletandoId === item.id"
-                  class="text-xs px-3 py-1 border border-red-200 text-red-600 rounded hover:bg-red-50 disabled:opacity-50 transition-colors"
-                >
-                  {{ deletandoId === item.id ? '...' : 'Excluir' }}
-                </button>
+                  @click="handleDeletar(item.id)"
+                />
               </div>
             </td>
           </tr>
