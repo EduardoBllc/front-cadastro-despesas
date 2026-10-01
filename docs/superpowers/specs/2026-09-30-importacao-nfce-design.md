@@ -105,8 +105,10 @@ itens: [{
 Campos novos, todos opcionais (criação manual não muda):
 
 - `CriarDespesa.nfce: OrigemNfce | None` — `{ chave: str (44 dígitos), cnpj: str (14 dígitos) }`.
-- `CriarItemDespesa.codigo_produto_nfce: str | None` — excluído do `model_dump()` que cria o
-  `ItemDespesa`.
+- `CriarDespesa.itens` passa a usar `CriarItemDespesaNfce(CriarItemDespesa)`, que acrescenta
+  `codigo_produto_nfce: str | None` — excluído do `model_dump()` que cria o `ItemDespesa`. Subclasse
+  (e não campo em `CriarItemDespesa`) porque `POST /despesas/{id}/itens` faz
+  `ItemDespesa(**body.model_dump())` com `CriarItemDespesa`.
 
 Com `nfce` presente, na mesma transação de `despesas.criar`:
 
@@ -145,7 +147,7 @@ Tipos (`src/types/api.ts`): `RascunhoNfce`, `ItemRascunhoNfce`, `OrigemNfce`;
   - `estabelecimento_id` = vinculado ou vazio; quando vazio, aviso
     `"<razão social> · <CNPJ formatado> · <endereço>"` (`data-cy="nfce-estabelecimento-aviso"`);
   - itens vinculados: `item_id`, unidade do item do catálogo, quantidade, valor unitário,
-    desconto, `codigo_produto_nfce`;
+    desconto, `codigo_produto_nfce`, `descricao_nota`;
   - itens sem vínculo: mesmos valores com `item_id` vazio, `descricao_nota` preenchida e unidade
     pré-selecionada quando a descrição de alguma `UnidadeMedida` bate (case-insensitive) com
     `unidade_nota`;
@@ -153,7 +155,8 @@ Tipos (`src/types/api.ts`): `RascunhoNfce`, `ItemRascunhoNfce`, `OrigemNfce`;
     `popularDeRascunho` **não** liga a flag `inicializando` (que suprime a sugestão na edição);
   - guarda `origemNfce = { chave, cnpj }`.
 - `ItemFormRow.vue` exibe `"Na nota: <descricao_nota> · <unidade_nota>"` quando
-  `descricao_nota` existe (`data-cy="item-descricao-nota"`).
+  `descricao_nota` existe (`data-cy="item-descricao-nota"`). Toda linha vinda da nota — vinculada
+  ou não — recebe `descricao_nota`, para o usuário conferir (e corrigir) vínculos já aprendidos.
 - Submit bloqueado enquanto houver linha com `codigo_produto_nfce` e sem `item_id`:
   erro "Vincule todos os itens da nota".
 - Payload inclui `nfce: origemNfce` e `codigo_produto_nfce` por item. `resetForm()` limpa
