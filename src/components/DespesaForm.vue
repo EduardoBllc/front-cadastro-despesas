@@ -8,13 +8,15 @@ import { listarUnidadesMedida, criarUnidadeMedida } from '@/api/unidades'
 import { listarCarros } from '@/api/carros'
 import { listarConfiguracoes } from '@/api/configuracoes'
 import { sugerirCategoriaDespesa, sugerirCategoriaItem } from '@/api/sugestoes'
-import { getCurrentISODate } from '@/utils/format'
+import { formatCnpj, getCurrentISODate } from '@/utils/format'
+import { MensagemNfce } from '@/api/nfce'
+import ImportarNfceModal from './ImportarNfceModal.vue'
 import ItemFormRow from './ItemFormRow.vue'
 import AppCombobox from './AppCombobox.vue'
 import type {
   Carro, CategoriaDespesa, CategoriaItem, CriarDespesaPayload, CriarItemPayload,
   DespesaDetalhe, Estabelecimento, Item, ItemDespesaParaAtualizar, ItemFormState,
-  TipoEstabelecimento, UnidadeMedida,
+  OrigemNfce, RascunhoNfce, TipoEstabelecimento, UnidadeMedida,
 } from '@/types/api'
 
 const props = defineProps<{ despesa?: DespesaDetalhe }>()
@@ -52,6 +54,11 @@ const mostrandoModalItem = ref(false)
 const novoItem = reactive({ descricao: '', categoria_item_id: '', unidade_medida_id: '' })
 const salvandoItem = ref(false)
 const indiceItemPendente = ref(-1)
+
+// Importação de NFC-e
+const mostrandoModalNfce = ref(false)
+const origemNfce = ref<OrigemNfce | null>(null)
+const avisoEstabelecimentoNfce = ref<string | null>(null)
 
 let timeoutSugestaoCategoriaDespesa: ReturnType<typeof setTimeout> | null = null
 let timeoutSugestaoItem: ReturnType<typeof setTimeout> | null = null
@@ -193,6 +200,44 @@ function popularFormulario() {
     abastecimento.litros = d.abastecimento.litros
     abastecimento.observacao = d.abastecimento.observacao ?? ''
   }
+}
+
+// Não liga `inicializando`: a sugestão de categoria deve disparar pelo estabelecimento da nota
+function popularDeRascunho(r: RascunhoNfce) {
+  resetForm()
+  mostrandoModalNfce.value = false
+  origemNfce.value = { chave: r.chave, cnpj: r.cnpj }
+  form.data_despesa = r.data_emissao
+  form.estabelecimento_id = r.estabelecimento_id ?? ''
+  avisoEstabelecimentoNfce.value = r.estabelecimento_id
+    ? null
+    : `${r.razao_social} · ${formatCnpj(r.cnpj)} · ${r.endereco}`
+
+  itens.value = [
+    ...r.itens.map(item => {
+      // vínculo para item ausente do catálogo carregado (ex.: inativo) conta como não vinculado
+      const doCatalogo = itensDisponiveis.value.find(i => i.id === item.item_id)
+      const unidadeDaNota = unidadesMedida.value.find(
+        u => u.descricao.toLowerCase() === item.unidade_nota.toLowerCase()
+      )
+      return {
+        item_id: doCatalogo?.id ?? '',
+        unidade_medida_id: doCatalogo ? doCatalogo.unidade_medida_id ?? '' : unidadeDaNota?.id ?? '',
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+        valor_desconto: item.valor_desconto,
+        codigo_produto_nfce: item.codigo,
+        descricao_nota: `${item.descricao_nota} · ${item.unidade_nota}`,
+      }
+    }),
+    { item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '', valor_desconto: '' },
+  ]
+}
+
+function bloqueadoPorNfce(): boolean {
+  if (!itens.value.some(i => i.codigo_produto_nfce && !i.item_id)) return false
+  error.value = MensagemNfce.VINCULE_ITENS
+  return true
 }
 
 onMounted(async () => {
@@ -380,7 +425,7 @@ async function resolveItemId(formItem: ItemFormState): Promise<string> {
 async function resolveItens(): Promise<CriarItemPayload[]> {
   const result: CriarItemPayload[] = []
   for (const formItem of itens.value.filter(i => !eItemVazio(i))) {
-    result.push({ item_id: await resolveItemId(formItem), quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario, valor_desconto: formItem.valor_desconto || '0' })
+    result.push({ item_id: await resolveItemId(formItem), quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario, valor_desconto: formItem.valor_desconto || '0', codigo_produto_nfce: formItem.codigo_produto_nfce })
   }
   return result
 }
@@ -405,10 +450,31 @@ function resetForm() {
   abastecimento.litros = ''
   abastecimento.observacao = ''
   itens.value = [{ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '', valor_desconto: '' }]
+  origemNfce.value = null
+  avisoEstabelecimentoNfce.value = null
   error.value = null
 }
 
+async function montarPayloadCriacao(): Promise<CriarDespesaPayload> {
+  return {
+    estabelecimento_id: form.estabelecimento_id,
+    categoria_despesa_id: form.categoria_despesa_id,
+    valor_total: form.valor_total,
+    data_despesa: form.data_despesa,
+    observacao: form.observacao || undefined,
+    itens: await resolveItens(),
+    abastecimento: eAbastecimento.value ? {
+      carro_id: abastecimento.carro_id,
+      quilometragem: parseInt(abastecimento.quilometragem),
+      litros: abastecimento.litros,
+      observacao: abastecimento.observacao || undefined,
+    } : undefined,
+    nfce: origemNfce.value ?? undefined,
+  }
+}
+
 async function handleSubmit() {
+  if (!props.despesa && bloqueadoPorNfce()) return
   loading.value = true
   error.value = null
   try {
@@ -431,22 +497,7 @@ async function handleSubmit() {
         })
       }
     } else {
-      const resolvedItens = await resolveItens()
-      const payload: CriarDespesaPayload = {
-        estabelecimento_id: form.estabelecimento_id,
-        categoria_despesa_id: form.categoria_despesa_id,
-        valor_total: form.valor_total,
-        data_despesa: form.data_despesa,
-        observacao: form.observacao || undefined,
-        itens: resolvedItens,
-        abastecimento: eAbastecimento.value ? {
-          carro_id: abastecimento.carro_id,
-          quilometragem: parseInt(abastecimento.quilometragem),
-          litros: abastecimento.litros,
-          observacao: abastecimento.observacao || undefined,
-        } : undefined,
-      }
-      await criarDespesa(payload)
+      await criarDespesa(await montarPayloadCriacao())
     }
     emit('saved')
   } catch (e) {
@@ -457,25 +508,11 @@ async function handleSubmit() {
 }
 
 async function handleSalvarEComecarOutra() {
+  if (bloqueadoPorNfce()) return
   loading.value = true
   error.value = null
   try {
-    const resolvedItens = await resolveItens()
-    const payload: CriarDespesaPayload = {
-      estabelecimento_id: form.estabelecimento_id,
-      categoria_despesa_id: form.categoria_despesa_id,
-      valor_total: form.valor_total,
-      data_despesa: form.data_despesa,
-      observacao: form.observacao || undefined,
-      itens: resolvedItens,
-      abastecimento: eAbastecimento.value ? {
-        carro_id: abastecimento.carro_id,
-        quilometragem: parseInt(abastecimento.quilometragem),
-        litros: abastecimento.litros,
-        observacao: abastecimento.observacao || undefined,
-      } : undefined,
-    }
-    await criarDespesa(payload)
+    await criarDespesa(await montarPayloadCriacao())
     resetForm()
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Erro ao salvar despesa'
@@ -553,11 +590,27 @@ async function handleSalvarEComecarOutra() {
       </div>
     </div>
 
+    <!-- Modal de importação de NFC-e -->
+    <ImportarNfceModal
+      v-if="mostrandoModalNfce"
+      @importado="popularDeRascunho"
+      @fechar="mostrandoModalNfce = false"
+    />
+
     <div class="flex items-center gap-3 mb-6">
       <button @click="emit('cancel')" class="text-gray-400 hover:text-gray-600 transition-colors text-sm">
         ← Voltar
       </button>
       <h2 class="text-2xl font-bold text-gray-800">{{ props.despesa ? 'Editar Despesa' : 'Nova Despesa' }}</h2>
+      <button
+        v-if="!props.despesa"
+        type="button"
+        data-cy="btn-importar-nfce-abrir"
+        class="ml-auto px-4 py-2 text-sm font-medium text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+        @click="mostrandoModalNfce = true"
+      >
+        Importar NFC-e
+      </button>
     </div>
 
     <form @submit.prevent="handleSubmit" class="space-y-6" data-cy="despesa-form">
@@ -602,6 +655,13 @@ async function handleSalvarEComecarOutra() {
               data-cy="select-estabelecimento"
               @create="iniciarCriacaoEstabelecimento"
             />
+            <p
+              v-if="avisoEstabelecimentoNfce && !form.estabelecimento_id"
+              data-cy="nfce-estabelecimento-aviso"
+              class="mt-1 text-xs text-amber-700"
+            >
+              Na nota: {{ avisoEstabelecimentoNfce }}
+            </p>
           </div>
 
           <div>

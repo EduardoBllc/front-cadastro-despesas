@@ -76,6 +76,14 @@ const valorTotal = computed(() => {
         data-cy="item-descricao"
         @create="(desc) => emit('create-item', desc, model.unidade_medida_id)"
       />
+      <p
+        v-if="model.descricao_nota"
+        data-cy="item-descricao-nota"
+        :title="model.descricao_nota"
+        class="mt-1 truncate text-[11px] text-gray-500"
+      >
+        Na nota: {{ model.descricao_nota }}
+      </p>
     </div>
     <div class="col-span-1">
       <AppCombobox
