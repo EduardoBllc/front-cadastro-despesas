@@ -60,7 +60,8 @@ watch(() => model.value.item_id, (newId) => {
 const valorTotal = computed(() => {
   const qtd = parseFloat(model.value.quantidade) || 0
   const unit = parseFloat(model.value.valor_unitario) || 0
-  return qtd * unit
+  const desc = parseFloat(model.value.valor_desconto) || 0
+  return Math.max(0, qtd * (unit - desc))
 })
 </script>
 
@@ -76,7 +77,7 @@ const valorTotal = computed(() => {
         @create="(desc) => emit('create-item', desc, model.unidade_medida_id)"
       />
     </div>
-    <div class="col-span-2">
+    <div class="col-span-1">
       <AppCombobox
         v-model="model.unidade_medida_id"
         :options="props.unidades"
@@ -106,6 +107,17 @@ const valorTotal = computed(() => {
         min="0.01"
         step="0.01"
         placeholder="R$ unit."
+        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+      />
+    </div>
+    <div class="col-span-1">
+      <input
+        v-model="model.valor_desconto"
+        data-cy="item-valor-desconto"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Desc."
         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
       />
     </div>

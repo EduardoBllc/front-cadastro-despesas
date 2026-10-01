@@ -116,6 +116,7 @@ onMounted(() => load())
                       <th class="text-left px-4 py-2 text-gray-500 font-medium">Item</th>
                       <th class="text-center px-4 py-2 text-gray-500 font-medium">Qtd</th>
                       <th class="text-right px-4 py-2 text-gray-500 font-medium">Unit.</th>
+                      <th class="text-right px-4 py-2 text-gray-500 font-medium">Desc.</th>
                       <th class="text-right px-4 py-2 text-gray-500 font-medium">Total</th>
                     </tr>
                   </thead>
@@ -129,6 +130,10 @@ onMounted(() => load())
                       </td>
                       <td class="px-4 py-2 text-center text-gray-600">{{ item.quantidade }}</td>
                       <td class="px-4 py-2 text-right text-gray-600">{{ formatCurrency(item.valor_unitario) }}</td>
+                      <td class="px-4 py-2 text-right text-gray-600">
+                        <span v-if="parseFloat(item.valor_desconto) > 0" class="text-red-500 text-xs">-{{ formatCurrency(item.valor_desconto) }}</span>
+                        <span v-else class="text-gray-300">-</span>
+                      </td>
                       <td class="px-4 py-2 text-right font-medium text-gray-800">{{ formatCurrency(item.valor_total) }}</td>
                     </tr>
                   </tbody>

@@ -132,7 +132,7 @@ watch(() => form.estabelecimento_id, (id) => {
   }
 })
 
-const itens = ref<ItemFormState[]>([{ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' }])
+const itens = ref<ItemFormState[]>([{ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '', valor_desconto: '' }])
 
 function eItemVazio(item: ItemFormState): boolean {
   return !item.item_id && !item.quantidade && !item.valor_unitario
@@ -144,14 +144,15 @@ const totalDosItens = computed(() => {
   return itens.value.reduce((acc, item) => {
     const qtd = parseFloat(item.quantidade) || 0
     const valor = parseFloat(item.valor_unitario) || 0
-    return acc + qtd * valor
+    const desc = parseFloat(item.valor_desconto) || 0
+    return acc + Math.max(0, qtd * (valor - desc))
   }, 0)
 })
 
 watch(itens, () => {
   const ultimo = itens.value[itens.value.length - 1]
   if (!ultimo || !eItemVazio(ultimo)) {
-    itens.value.push({ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' })
+    itens.value.push({ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '', valor_desconto: '' })
   }
 }, { deep: true })
 
@@ -180,8 +181,9 @@ function popularFormulario() {
       unidade_medida_id: item.item?.unidade_medida_id ?? '',
       quantidade: item.quantidade,
       valor_unitario: item.valor_unitario,
+      valor_desconto: item.valor_desconto ?? '',
     })),
-    { item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' },
+    { item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '', valor_desconto: '' },
   ]
 
   if (d.abastecimento) {
@@ -378,7 +380,7 @@ async function resolveItemId(formItem: ItemFormState): Promise<string> {
 async function resolveItens(): Promise<CriarItemPayload[]> {
   const result: CriarItemPayload[] = []
   for (const formItem of itens.value.filter(i => !eItemVazio(i))) {
-    result.push({ item_id: await resolveItemId(formItem), quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario })
+    result.push({ item_id: await resolveItemId(formItem), quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario, valor_desconto: formItem.valor_desconto || '0' })
   }
   return result
 }
@@ -386,7 +388,7 @@ async function resolveItens(): Promise<CriarItemPayload[]> {
 async function resolveItensParaEdicao(): Promise<ItemDespesaParaAtualizar[]> {
   const result: ItemDespesaParaAtualizar[] = []
   for (const formItem of itens.value.filter(i => !eItemVazio(i))) {
-    result.push({ id: formItem.id, item_id: await resolveItemId(formItem), quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario })
+    result.push({ id: formItem.id, item_id: await resolveItemId(formItem), quantidade: formItem.quantidade, valor_unitario: formItem.valor_unitario, valor_desconto: formItem.valor_desconto || '0' })
   }
   return result
 }
@@ -402,7 +404,7 @@ function resetForm() {
   abastecimento.quilometragem = ''
   abastecimento.litros = ''
   abastecimento.observacao = ''
-  itens.value = [{ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '' }]
+  itens.value = [{ item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '', valor_desconto: '' }]
   error.value = null
 }
 
@@ -732,9 +734,10 @@ async function handleSalvarEComecarOutra() {
 
         <div class="grid grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-500">
           <span class="col-span-3">Item</span>
-          <span class="col-span-2">Unidade</span>
+          <span class="col-span-1">Unidade</span>
           <span class="col-span-2">Quantidade</span>
           <span class="col-span-2">Valor Unit.</span>
+          <span class="col-span-1">Desc.</span>
           <span class="col-span-2">Valor Total</span>
           <span class="col-span-1"></span>
         </div>

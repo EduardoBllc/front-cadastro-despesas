@@ -101,6 +101,7 @@ export interface ItemDespesa {
   item: Item | null
   quantidade: string
   valor_unitario: string
+  valor_desconto: string
   valor_total: string
   data_cadastro: string
   data_alteracao: string
@@ -151,6 +152,7 @@ export interface CriarItemPayload {
   item_id: string
   quantidade: string
   valor_unitario: string
+  valor_desconto: string
 }
 
 export interface ItemFormState {
@@ -159,6 +161,7 @@ export interface ItemFormState {
   unidade_medida_id: string
   quantidade: string
   valor_unitario: string
+  valor_desconto: string
 }
 
 export interface ItemDespesaParaAtualizar {
@@ -166,6 +169,7 @@ export interface ItemDespesaParaAtualizar {
   item_id: string
   quantidade: string
   valor_unitario: string
+  valor_desconto: string
 }
 
 export interface AtualizarDespesaPayload {

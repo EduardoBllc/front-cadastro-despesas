@@ -48,7 +48,7 @@ describe('API: criarDespesa', () => {
     categoria_despesa_id: 'cat-uuid',
     valor_total: '200.00',
     itens: [
-      { item_id: 'item-uuid', quantidade: '2', valor_unitario: '25.00' },
+      { item_id: 'item-uuid', quantidade: '2', valor_unitario: '25.00', valor_desconto: '0' },
     ],
   }
 
