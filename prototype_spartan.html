@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protótipo - Spartan UI (Layout Completo)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fontes: Nunito para Títulos, Plus Jakarta Sans (Gilroy feel) para textos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Ícones -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        heading: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: {
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))',
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(var(--secondary))',
+                            foreground: 'hsl(var(--secondary-foreground))',
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))',
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))',
+                        },
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                    },
+                    borderRadius: {
+                        lg: 'var(--radius)',
+                        md: 'calc(var(--radius) - 2px)',
+                        sm: 'calc(var(--radius) - 4px)',
+                        full: '9999px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --background: 210 40% 98%; 
+            --foreground: 222 47% 11%;
+            --card: 0 0% 100%;
+            --card-foreground: 222 47% 11%;
+            --primary: 151 21% 52%; /* #699E84 */
+            --primary-foreground: 0 0% 100%; /* Texto branco no botão primário */
+            --secondary: 214 32% 91%;
+            --secondary-foreground: 222 47% 11%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 151 21% 52%;
+            --radius: 1.5rem;
+        }
+
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.foreground');
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: theme('fontFamily.heading');
+        }
+
+        /* Utils Spartan */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: theme('borderRadius.full');
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 150ms ease;
+            height: 2.5rem;
+            padding: 0 1rem;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary {
+            background-color: theme('colors.primary.DEFAULT');
+            color: theme('colors.primary.foreground');
+            box-shadow: 0 4px 14px 0 rgba(105, 158, 132, 0.39);
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            background-color: theme('colors.secondary.DEFAULT');
+            color: theme('colors.secondary.foreground');
+        }
+        .btn-secondary:hover { background-color: theme('colors.secondary.DEFAULT' / 0.8); }
+
+        .card {
+            border-radius: theme('borderRadius.lg');
+            border: 1px solid theme('colors.border');
+            background-color: theme('colors.card.DEFAULT');
+            color: theme('colors.card.foreground');
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+        
+        .input {
+            display: flex;
+            height: 3.5rem;
+            width: 100%;
+            border-radius: theme('borderRadius.md');
+            border: 1px solid theme('colors.border');
+            background-color: theme('colors.background');
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .input:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px theme('colors.background'), 0 0 0 4px theme('colors.ring');
+        }
+    </style>
+</head>
+<body class="antialiased h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Navegação Lateral (Desktop) / Escondida no Mobile -->
+    <aside class="hidden md:flex flex-col w-64 border-r border-border bg-card h-full z-10 p-6">
+        <div class="flex items-center gap-3 mb-10 text-primary">
+            <div class="bg-primary/10 p-2 rounded-2xl">
+                <i class="ri-wallet-3-fill text-2xl"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">Despesas</h1>
+        </div>
+        
+        <nav class="flex-1 flex flex-col gap-2">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-[var(--radius)] font-semibold transition-colors">
+                <i class="ri-home-smile-2-line text-xl"></i>
+                Visão Geral
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground rounded-[var(--radius)] font-medium transition-colors">
+                <i class="ri-pie-chart-2-line text-xl"></i>
+                Relatórios
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground rounded-[var(--radius)] font-medium transition-colors">
+                <i class="ri-list-check-2 text-xl"></i>
+                Categorias
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground rounded-[var(--radius)] font-medium transition-colors">
+                <i class="ri-store-2-line text-xl"></i>
+                Estabelecimentos
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground rounded-[var(--radius)] font-medium transition-colors">
+                <i class="ri-settings-4-line text-xl"></i>
+                Ajustes
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="flex-1 flex flex-col h-full overflow-y-auto relative p-4 md:p-8 lg:px-12">
+        
+        <div class="max-w-6xl w-full mx-auto">
+            <!-- Header Mobile -->
+            <header class="md:hidden flex items-center justify-between bg-card border border-border p-4 rounded-[var(--radius)] mb-6">
+                <div class="flex items-center gap-2 text-primary">
+                    <i class="ri-wallet-3-fill text-2xl"></i>
+                    <h1 class="text-lg font-bold">Despesas</h1>
+                </div>
+            </header>
+
+            <header class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold tracking-tight mb-1 text-foreground">Olá, Eduardo! 👋</h2>
+                    <p class="text-muted-foreground font-medium">Controle de Despesas (Visual Spartan)</p>
+                </div>
+                <button class="btn btn-primary h-12 px-6 hidden md:flex text-base">
+                    <i class="ri-add-line mr-2"></i> Nova Despesa
+                </button>
+            </header>
+
+            <!-- Cards Superiores -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Card Principal -->
+                <div class="card p-6 bg-gradient-to-br from-primary to-[#497A62] text-primary-foreground border-none shadow-xl relative overflow-hidden lg:col-span-2">
+                    <div class="absolute right-0 top-0 w-32 h-32 bg-white/20 rounded-full blur-2xl transform translate-x-10 -translate-y-10"></div>
+                    <div class="relative z-10">
+                        <h3 class="text-primary-foreground/80 font-semibold mb-2">Gasto do Mês</h3>
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-5xl font-extrabold tracking-tight">R$ 1.840<span class="text-2xl text-primary-foreground/70">,50</span></span>
+                        </div>
+                        <div class="inline-flex items-center rounded-full bg-white/20 text-white px-3 py-1 text-sm font-semibold backdrop-blur-sm">
+                            <i class="ri-arrow-down-line mr-1"></i> 12% a menos que mês passado
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card de Ação Rápida -->
+                <div class="card p-6 flex flex-col justify-center items-center text-center border-dashed border-2 hover:bg-secondary/50 cursor-pointer transition-colors" onclick="alert('Abrir modal de despesa')">
+                    <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center text-primary text-2xl mb-3">
+                        <i class="ri-add-line"></i>
+                    </div>
+                    <h4 class="font-bold text-foreground">Anotar Despesa</h4>
+                    <p class="text-sm text-muted-foreground mt-1">Registre um novo gasto rapidamente.</p>
+                </div>
+            </div>
+
+            <!-- Tabela/Lista Spartan -->
+            <div class="card overflow-hidden">
+                <div class="p-6 border-b border-border flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold">Despesas Recentes</h3>
+                        <p class="text-sm text-muted-foreground">Últimos gastos registrados.</p>
+                    </div>
+                    <button class="btn btn-secondary">Ver todas</button>
+                </div>
+                
+                <div class="divide-y divide-border">
+                    <!-- Item -->
+                    <div class="p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-[1rem] bg-orange-100 flex items-center justify-center text-orange-600 text-xl">
+                                <i class="ri-restaurant-line"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-foreground">Barra 4 Hamburgueria</h4>
+                                <p class="text-sm text-muted-foreground font-medium">Alimentação • Ontem</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="font-bold text-lg text-foreground">R$ 160,00</div>
+                            <button class="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground">
+                                <i class="ri-more-2-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Item -->
+                    <div class="p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-[1rem] bg-blue-100 flex items-center justify-center text-blue-600 text-xl">
+                                <i class="ri-shopping-cart-2-line"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-foreground">Zaffari Sinimbu</h4>
+                                <p class="text-sm text-muted-foreground font-medium">Supermercado • 05/07</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="font-bold text-lg text-foreground">R$ 241,20</div>
+                            <button class="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground">
+                                <i class="ri-more-2-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Item -->
+                    <div class="p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-[1rem] bg-purple-100 flex items-center justify-center text-purple-600 text-xl">
+                                <i class="ri-gas-station-line"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-foreground">Posto Sim Perimetral</h4>
+                                <p class="text-sm text-muted-foreground font-medium">Combustível • 23/06</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="font-bold text-lg text-foreground">R$ 248,15</div>
+                            <button class="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground">
+                                <i class="ri-more-2-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão Flutuante Mobile -->
+            <button class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center text-2xl z-20">
+                <i class="ri-add-line"></i>
+            </button>
+        </div>
+    </main>
+</body>
+</html>
