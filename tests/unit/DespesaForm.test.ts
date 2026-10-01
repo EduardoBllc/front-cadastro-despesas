@@ -42,6 +42,11 @@ jest.mock('@/api/itens', () => ({
   criarItem: jest.fn(),
 }))
 
+jest.mock('@/api/unidades', () => ({
+  listarUnidadesMedida: jest.fn().mockResolvedValue([]),
+  criarUnidadeMedida: jest.fn(),
+}))
+
 jest.mock('@/api/carros', () => ({
   listarCarros: jest.fn().mockResolvedValue([
     { id: 'carro-1', nome: 'Gol', placa: 'ABC-1234', ativo: true },
@@ -65,33 +70,25 @@ describe('DespesaForm', () => {
     expect(wrapper.find('[data-cy=input-data]').exists()).toBe(true)
     expect(wrapper.find('[data-cy=select-categoria]').exists()).toBe(true)
     expect(wrapper.find('[data-cy=input-valor-total]').exists()).toBe(true)
-    expect(wrapper.find('[data-cy=btn-add-item]').exists()).toBe(true)
     expect(wrapper.find('[data-cy=btn-submit]').exists()).toBe(true)
   })
 
-  it('inicia sem itens na lista', () => {
+  it('inicia com uma linha de item vazia', () => {
     const wrapper = mount(DespesaForm)
-    expect(wrapper.findAll('[data-cy=item-row]')).toHaveLength(0)
-  })
-
-  it('adiciona uma linha de item ao clicar em Adicionar Item', async () => {
-    const wrapper = mount(DespesaForm)
-    await wrapper.find('[data-cy=btn-add-item]').trigger('click')
     expect(wrapper.findAll('[data-cy=item-row]')).toHaveLength(1)
   })
 
-  it('adiciona múltiplos itens', async () => {
+  it('adiciona uma nova linha vazia ao preencher a última', async () => {
     const wrapper = mount(DespesaForm)
-    await wrapper.find('[data-cy=btn-add-item]').trigger('click')
-    await wrapper.find('[data-cy=btn-add-item]').trigger('click')
-    await wrapper.find('[data-cy=btn-add-item]').trigger('click')
-    expect(wrapper.findAll('[data-cy=item-row]')).toHaveLength(3)
+    await flushPromises()
+    await wrapper.find('[data-cy=item-quantidade]').setValue('2')
+    expect(wrapper.findAll('[data-cy=item-row]')).toHaveLength(2)
   })
 
   it('remove item ao clicar no botão de remover', async () => {
     const wrapper = mount(DespesaForm)
-    await wrapper.find('[data-cy=btn-add-item]').trigger('click')
-    await wrapper.find('[data-cy=btn-add-item]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-cy=item-quantidade]').setValue('2')
     expect(wrapper.findAll('[data-cy=item-row]')).toHaveLength(2)
 
     await wrapper.find('[data-cy=item-remove]').trigger('click')
