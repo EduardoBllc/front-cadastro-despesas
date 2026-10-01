@@ -153,6 +153,7 @@ export interface CriarItemPayload {
   quantidade: string
   valor_unitario: string
   valor_desconto: string
+  codigo_produto_nfce?: string
 }
 
 export interface ItemFormState {
@@ -162,6 +163,8 @@ export interface ItemFormState {
   quantidade: string
   valor_unitario: string
   valor_desconto: string
+  codigo_produto_nfce?: string
+  descricao_nota?: string
 }
 
 export interface ItemDespesaParaAtualizar {
@@ -203,6 +206,7 @@ export interface CriarDespesaPayload {
   observacao?: string
   itens: CriarItemPayload[]
   abastecimento?: CriarAbastecimentoPayload
+  nfce?: OrigemNfce
 }
 
 export interface GastoMensal {
@@ -234,4 +238,31 @@ export interface AbastecimentoEficiencia {
   km_por_litro: string | null
   valor_por_litro: string
   total_gasto: string
+}
+
+export interface OrigemNfce {
+  chave: string
+  cnpj: string
+}
+
+export interface ItemRascunhoNfce {
+  codigo: string
+  descricao_nota: string
+  unidade_nota: string
+  quantidade: string
+  valor_unitario: string
+  valor_desconto: string
+  item_id: string | null
+}
+
+export interface RascunhoNfce {
+  chave: string
+  data_emissao: string
+  cnpj: string
+  razao_social: string
+  endereco: string
+  estabelecimento_id: string | null
+  valor_pago: string
+  desconto_total: string
+  itens: ItemRascunhoNfce[]
 }

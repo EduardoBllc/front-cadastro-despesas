@@ -1,4 +1,4 @@
-import { formatDate, formatCurrency, getCurrentISODate } from '@/utils/format'
+import { formatDate, formatCurrency, getCurrentISODate, formatCnpj } from '@/utils/format'
 
 describe('format utils', () => {
   describe('formatDate', () => {
@@ -33,6 +33,12 @@ describe('format utils', () => {
     it('deve retornar uma data no formato YYYY-MM-DD', () => {
       const date = getCurrentISODate()
       expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    })
+  })
+
+  describe('formatCnpj', () => {
+    it('deve formatar CNPJ só com dígitos', () => {
+      expect(formatCnpj('01132478002343')).toBe('01.132.478/0023-43')
     })
   })
 })

@@ -30,3 +30,10 @@ export function getCurrentISODate(): string {
   const day = String(now.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
+
+/**
+ * Formata um CNPJ com 14 dígitos para 00.000.000/0000-00.
+ */
+export function formatCnpj(cnpj: string): string {
+  return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
+}
