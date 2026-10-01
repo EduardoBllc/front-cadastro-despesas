@@ -1,5 +1,5 @@
 # Correções
-Sem correções
+- Ajustar relatórios
 
 # Features
 - Autenticação
@@ -21,6 +21,7 @@ Sem correções
   - Abatecimento
   - Delivery
 - Pesquisa nas páginas
+- Pedir confirmação para salvar despesa
 
 # Refatorações
 - Criar componentes padrões
@@ -32,4 +33,3 @@ Sem correções
 - Máscara no valor dos itens
 - Simplificar criação de produto
 - Melhorar mensagens de erro
-- Trocar botões com texto por ícones com tooltip
