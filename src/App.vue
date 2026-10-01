@@ -9,6 +9,7 @@ import CrudTipoEstabelecimento from './components/CrudTipoEstabelecimento.vue'
 import CrudItem from './components/CrudItem.vue'
 import ConfiguracaoAbastecimento from './components/ConfiguracaoAbastecimento.vue'
 import ConfiguracaoUnitario from './components/ConfiguracaoUnitario.vue'
+import RelatorioView from './components/RelatorioView.vue'
 import {
   listarCategoriasDespesa, criarCategoriaDespesa, atualizarCategoriaDespesa, deletarCategoriaDespesa,
   listarCategoriasItem, criarCategoriaItem, atualizarCategoriaItem, deletarCategoriaItem,
@@ -16,7 +17,7 @@ import {
 import { obterDespesa } from './api/despesas'
 import type { DespesaDetalhe } from './types/api'
 
-type Section = 'despesas' | 'categorias-despesa' | 'categorias-item' | 'itens' | 'carros' | 'estabelecimentos' | 'tipos-estabelecimento' | 'configuracoes'
+type Section = 'despesas' | 'relatorios' | 'categorias-despesa' | 'categorias-item' | 'itens' | 'carros' | 'estabelecimentos' | 'tipos-estabelecimento' | 'configuracoes'
 const section = ref<Section>('despesas')
 const despesaView = ref<'lista' | 'nova' | 'editar'>('lista')
 const listKey = ref(0)
@@ -47,6 +48,7 @@ function onSaved() {
 
 const navItems: { key: Section; label: string }[] = [
   { key: 'despesas', label: 'Despesas' },
+  { key: 'relatorios', label: 'Relatórios' },
   { key: 'itens', label: 'Itens' },
   { key: 'categorias-despesa', label: 'Categorias de Despesa' },
   { key: 'categorias-item', label: 'Categorias de Item' },
@@ -101,6 +103,10 @@ const navItems: { key: Section; label: string }[] = [
           @saved="onSaved"
           @cancel="() => { despesaView = 'lista'; despesaParaEditar = null }"
         />
+      </template>
+
+      <template v-else-if="section === 'relatorios'">
+        <RelatorioView />
       </template>
 
       <template v-else-if="section === 'categorias-despesa'">

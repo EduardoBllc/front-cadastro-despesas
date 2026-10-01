@@ -204,3 +204,34 @@ export interface CriarDespesaPayload {
   itens: CriarItemPayload[]
   abastecimento?: CriarAbastecimentoPayload
 }
+
+export interface GastoMensal {
+  mes: number
+  total: string
+  quantidade: number
+  ticket_medio: string | null
+}
+
+export interface GastoCategoria {
+  categoria_id: string
+  categoria_descricao: string
+  total: string
+  quantidade: number
+  percentual: string
+}
+
+export interface AbastecimentoMensal {
+  mes: number
+  total_gasto: string
+  total_litros: string
+  quantidade: number
+}
+
+export interface AbastecimentoEficiencia {
+  data_abastecimento: string
+  quilometragem: number
+  km_rodados: number | null
+  km_por_litro: string | null
+  valor_por_litro: string
+  total_gasto: string
+}
