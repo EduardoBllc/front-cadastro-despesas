@@ -1,0 +1,9 @@
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+
+    # Mesmo comportamento do proxy do Vite em dev: /api/x -> ${API_URL}/x
+    location /api/ {
+        proxy_pass ${API_URL}/;
+    }
+}
