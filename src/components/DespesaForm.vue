@@ -597,8 +597,8 @@ async function handleSalvarEComecarOutra() {
       @fechar="mostrandoModalNfce = false"
     />
 
-    <div class="flex items-center gap-3 mb-6">
-      <button @click="emit('cancel')" class="text-gray-400 hover:text-gray-600 transition-colors text-sm">
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <button @click="emit('cancel')" class="whitespace-nowrap text-gray-400 hover:text-gray-600 transition-colors text-sm">
         ← Voltar
       </button>
       <h2 class="text-2xl font-bold text-gray-800">{{ props.despesa ? 'Editar Despesa' : 'Nova Despesa' }}</h2>
@@ -606,7 +606,7 @@ async function handleSalvarEComecarOutra() {
         v-if="!props.despesa"
         type="button"
         data-cy="btn-importar-nfce-abrir"
-        class="ml-auto px-4 py-2 text-sm font-medium text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+        class="ml-auto whitespace-nowrap px-4 py-2 text-sm font-medium text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
         @click="mostrandoModalNfce = true"
       >
         Importar NFC-e
@@ -792,7 +792,7 @@ async function handleSalvarEComecarOutra() {
           <h3 class="font-semibold text-gray-700 text-sm uppercase tracking-wide">Itens</h3>
         </div>
 
-        <div class="grid grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-500">
+        <div class="hidden lg:grid grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-500">
           <span class="col-span-3">Item</span>
           <span class="col-span-1">Unidade</span>
           <span class="col-span-2">Quantidade</span>
@@ -822,7 +822,7 @@ async function handleSalvarEComecarOutra() {
 
       <div v-if="error" class="bg-red-50 text-red-700 p-4 rounded-lg text-sm">{{ error }}</div>
 
-      <div class="flex gap-3 justify-end">
+      <div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
         <button type="button" data-cy="btn-cancel" @click="emit('cancel')"
           class="px-6 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
           Cancelar

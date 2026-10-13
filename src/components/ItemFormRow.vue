@@ -66,8 +66,8 @@ const valorTotal = computed(() => {
 </script>
 
 <template>
-  <div class="grid grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-lg" data-cy="item-row">
-    <div class="col-span-3">
+  <div class="grid grid-cols-6 lg:grid-cols-12 gap-2 items-start p-3 bg-gray-50 rounded-lg" data-cy="item-row">
+    <div class="col-span-6 lg:col-span-3">
       <AppCombobox
         v-model="model.item_id"
         :options="opcoesItens"
@@ -85,7 +85,8 @@ const valorTotal = computed(() => {
         Na nota: {{ model.descricao_nota }}
       </p>
     </div>
-    <div class="col-span-1">
+    <div class="col-span-2 lg:col-span-1">
+      <span class="lg:hidden block mb-0.5 text-xs font-medium text-gray-500">Unidade</span>
       <AppCombobox
         v-model="model.unidade_medida_id"
         :options="props.unidades"
@@ -95,6 +96,7 @@ const valorTotal = computed(() => {
       />
     </div>
     <div class="col-span-2">
+      <span class="lg:hidden block mb-0.5 text-xs font-medium text-gray-500">Qtd</span>
       <input
         v-model="model.quantidade"
         data-cy="item-quantidade"
@@ -107,6 +109,7 @@ const valorTotal = computed(() => {
       />
     </div>
     <div class="col-span-2">
+      <span class="lg:hidden block mb-0.5 text-xs font-medium text-gray-500">Valor unit.</span>
       <input
         v-model="model.valor_unitario"
         data-cy="item-valor-unitario"
@@ -118,7 +121,8 @@ const valorTotal = computed(() => {
         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
       />
     </div>
-    <div class="col-span-1">
+    <div class="col-span-2 lg:col-span-1">
+      <span class="lg:hidden block mb-0.5 text-xs font-medium text-gray-500">Desc.</span>
       <input
         v-model="model.valor_desconto"
         data-cy="item-valor-desconto"
@@ -129,7 +133,8 @@ const valorTotal = computed(() => {
         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
       />
     </div>
-    <div class="col-span-2">
+    <div class="col-span-3 lg:col-span-2">
+      <span class="lg:hidden block mb-0.5 text-xs font-medium text-gray-500">Total</span>
       <input
         :value="formatCurrency(valorTotal)"
         readonly
@@ -138,7 +143,7 @@ const valorTotal = computed(() => {
         class="block w-full rounded-md border-gray-200 bg-gray-100 shadow-sm sm:text-sm text-right font-medium text-gray-600 cursor-not-allowed"
       />
     </div>
-    <div class="col-span-1 flex justify-center pt-1.5">
+    <div class="col-span-1 flex justify-center self-end pb-2.5 lg:self-auto lg:pb-0 lg:pt-1.5">
       <button
         v-if="props.removable !== false"
         type="button"

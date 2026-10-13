@@ -1,7 +1,9 @@
 # Correções
+
 - Ajustar relatórios
 
 # Features
+
 - Autenticação
 - Autorização
 - Configurações por usuário (quando houver autenticação)
@@ -24,12 +26,15 @@
 - Pedir confirmação para salvar despesa
 
 # Refatorações
+
 - Criar componentes padrões
 - Padronizar formulários em um componente
 - Paginação nas páginas além da despesa
 
 # Cosméticos
+
 - Agrupamento das páginas por seções (Abastecimento, Aparência, Notificações etc.)
 - Máscara no valor dos itens
 - Simplificar criação de produto
 - Melhorar mensagens de erro
+- Pesquisa case insensitive e ignorando acentuação

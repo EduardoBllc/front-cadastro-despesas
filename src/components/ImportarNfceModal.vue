@@ -38,10 +38,11 @@ function onErroCamera(mensagem: string) {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <!-- items-start + my-auto: centraliza, mas rola a partir do topo quando a câmera deixa a modal mais alta que a tela -->
+  <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 bg-black/50 backdrop-blur-sm">
     <form
       data-cy="form-importar-nfce"
-      class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md space-y-4 border border-gray-100"
+      class="my-auto bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md space-y-4 border border-gray-100"
       @submit.prevent="importar"
     >
       <h4 class="text-lg font-bold text-gray-800">Importar NFC-e</h4>
@@ -63,14 +64,14 @@ function onErroCamera(mensagem: string) {
 
       <p v-if="erro" data-cy="nfce-erro" class="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{{ erro }}</p>
 
-      <div class="flex gap-3 pt-2">
+      <div class="flex flex-wrap gap-3 pt-2">
         <button
           type="button"
           data-cy="btn-ler-webcam"
-          class="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+          class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
           @click="lendoWebcam = !lendoWebcam"
         >
-          {{ lendoWebcam ? 'Parar webcam' : 'Ler pela webcam' }}
+          {{ lendoWebcam ? 'Parar câmera' : 'Ler pela câmera' }}
         </button>
         <button
           type="button"

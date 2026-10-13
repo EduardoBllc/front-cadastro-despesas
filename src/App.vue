@@ -66,13 +66,14 @@ const navItems: { key: Section; label: string }[] = [
         <span class="text-xl">💰</span>
         <h1 class="text-lg font-bold text-gray-800">Cadastro de Despesas</h1>
       </div>
-      <nav class="max-w-5xl mx-auto px-4 flex gap-1 border-t border-gray-100">
+      <!-- rola na horizontal: se a página alargar, o celular desloca as modais (position: fixed) -->
+      <nav class="max-w-5xl mx-auto px-4 flex gap-1 overflow-x-auto border-t border-gray-100">
         <button
           v-for="item in navItems"
           :key="item.key"
           @click="navTo(item.key)"
           :class="[
-            'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+            'shrink-0 whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
             section === item.key
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-gray-500 hover:text-gray-700',
