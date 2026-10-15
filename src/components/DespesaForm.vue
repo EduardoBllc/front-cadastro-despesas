@@ -9,6 +9,7 @@ import { listarCarros } from '@/api/carros'
 import { listarConfiguracoes } from '@/api/configuracoes'
 import { sugerirCategoriaDespesa, sugerirCategoriaItem } from '@/api/sugestoes'
 import { formatCnpj, getCurrentISODate } from '@/utils/format'
+import { sugerirItens } from '@/utils/similaridade'
 import { MensagemNfce } from '@/api/nfce'
 import ImportarNfceModal from './ImportarNfceModal.vue'
 import ItemFormRow from './ItemFormRow.vue'
@@ -217,17 +218,21 @@ function popularDeRascunho(r: RascunhoNfce) {
     ...r.itens.map(item => {
       // vínculo para item ausente do catálogo carregado (ex.: inativo) conta como não vinculado
       const doCatalogo = itensDisponiveis.value.find(i => i.id === item.item_id)
+      const sugestao = doCatalogo ? null : sugerirItens(item.descricao_nota, itensDisponiveis.value)
+      const escolhido = doCatalogo ?? sugestao?.automatico
       const unidadeDaNota = unidadesMedida.value.find(
         u => u.descricao.toLowerCase() === item.unidade_nota.toLowerCase()
       )
       return {
-        item_id: doCatalogo?.id ?? '',
-        unidade_medida_id: doCatalogo ? doCatalogo.unidade_medida_id ?? '' : unidadeDaNota?.id ?? '',
+        item_id: escolhido?.id ?? '',
+        unidade_medida_id: escolhido ? escolhido.unidade_medida_id ?? '' : unidadeDaNota?.id ?? '',
         quantidade: item.quantidade,
         valor_unitario: item.valor_unitario,
         valor_desconto: item.valor_desconto,
         codigo_produto_nfce: item.codigo,
         descricao_nota: `${item.descricao_nota} · ${item.unidade_nota}`,
+        item_id_automatico: sugestao?.automatico?.id,
+        sugestoes_ids: sugestao?.sugestoes.map(i => i.id),
       }
     }),
     { item_id: '', unidade_medida_id: '', quantidade: '', valor_unitario: '', valor_desconto: '' },

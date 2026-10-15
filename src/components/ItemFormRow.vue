@@ -37,6 +37,10 @@ const opcoesItens = computed(() => {
   })
 })
 
+const sugestoes = computed(() =>
+  (model.value.sugestoes_ids ?? []).flatMap(id => opcoesItens.value.find(o => o.id === id) ?? [])
+)
+
 watch(() => model.value.item_id, (newId) => {
   const item = props.itens.find(i => i.id === newId)
   if (item) {
@@ -84,6 +88,25 @@ const valorTotal = computed(() => {
       >
         Na nota: {{ model.descricao_nota }}
       </p>
+      <p
+        v-if="model.item_id === model.item_id_automatico"
+        data-cy="item-vinculo-automatico"
+        class="mt-0.5 text-[11px] font-medium text-amber-600"
+      >
+        Sugestão automática, confira
+      </p>
+      <div v-else-if="!model.item_id && sugestoes.length" data-cy="item-sugestoes" class="mt-1 flex flex-wrap gap-1">
+        <button
+          v-for="sugestao in sugestoes"
+          :key="sugestao.id"
+          type="button"
+          data-cy="item-sugestao"
+          class="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700 hover:bg-blue-100"
+          @click="model.item_id = sugestao.id"
+        >
+          {{ sugestao.label }}
+        </button>
+      </div>
     </div>
     <div class="col-span-2 lg:col-span-1">
       <span class="lg:hidden block mb-0.5 text-xs font-medium text-gray-500">Unidade</span>

@@ -165,6 +165,8 @@ export interface ItemFormState {
   valor_desconto: string
   codigo_produto_nfce?: string
   descricao_nota?: string
+  item_id_automatico?: string
+  sugestoes_ids?: string[]
 }
 
 export interface ItemDespesaParaAtualizar {

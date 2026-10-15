@@ -139,15 +139,15 @@ const rascunho: RascunhoNfce = {
   itens: [
     { codigo: '111', descricao_nota: 'Arroz Tio 1kg', unidade_nota: 'UN', quantidade: '1.000', valor_unitario: '5.00', valor_desconto: '0.00', item_id: 'item-1' },
     { codigo: '222', descricao_nota: 'Feijao Kg', unidade_nota: 'KG', quantidade: '1.000', valor_unitario: '8.00', valor_desconto: '0.00', item_id: null },
-    { codigo: '333', descricao_nota: 'Item Antigo', unidade_nota: 'UN', quantidade: '1.000', valor_unitario: '1.00', valor_desconto: '0.00', item_id: 'item-fora-do-catalogo' },
+    { codigo: '333', descricao_nota: 'Item Antigo', unidade_nota: 'KG', quantidade: '1.000', valor_unitario: '1.00', valor_desconto: '0.00', item_id: 'item-fora-do-catalogo' },
   ],
 }
 
-async function abrirComNota(): Promise<VueWrapper> {
+async function abrirComNota(r: RascunhoNfce = rascunho): Promise<VueWrapper> {
   const wrapper = mount(DespesaForm)
   await flushPromises()
   await wrapper.find('[data-cy=btn-importar-nfce-abrir]').trigger('click')
-  wrapper.findComponent(ImportarNfceModal).vm.$emit('importado', rascunho)
+  wrapper.findComponent(ImportarNfceModal).vm.$emit('importado', r)
   await flushPromises()
   return wrapper
 }
@@ -181,9 +181,38 @@ describe('DespesaForm — importação de NFC-e', () => {
 
     const linhas = wrapper.findAllComponents(ItemFormRow)
     expect(linhas[0].props('modelValue')).toMatchObject({ item_id: 'item-1', codigo_produto_nfce: '111', valor_unitario: '5.00' })
-    expect(linhas[1].props('modelValue')).toMatchObject({ item_id: '', unidade_medida_id: 'und-kg' })
+    // sem vínculo, mas "Feijao Kg" é idêntico a "Feijão" do catálogo
+    expect(linhas[1].props('modelValue')).toMatchObject({ item_id: 'item-2', item_id_automatico: 'item-2' })
     // vínculo para item fora do catálogo carregado (ex.: inativo) aparece como não vinculado
-    expect(linhas[2].props('modelValue')).toMatchObject({ item_id: '' })
+    expect(linhas[2].props('modelValue')).toMatchObject({ item_id: '', unidade_medida_id: 'und-kg' })
+  })
+
+  it('sinaliza o item pré-selecionado até ser trocado', async () => {
+    const wrapper = await abrirComNota()
+    const linhas = wrapper.findAllComponents(ItemFormRow)
+    expect(linhas[0].find('[data-cy=item-vinculo-automatico]').exists()).toBe(false)
+    expect(linhas[1].find('[data-cy=item-vinculo-automatico]').exists()).toBe(true)
+
+    linhas[1].findComponent(AppCombobox).vm.$emit('update:modelValue', 'item-1')
+    await flushPromises()
+
+    expect(linhas[1].find('[data-cy=item-vinculo-automatico]').exists()).toBe(false)
+  })
+
+  it('sugere itens parecidos e vincula pelo clique', async () => {
+    const wrapper = await abrirComNota({
+      ...rascunho,
+      itens: [{ ...rascunho.itens[1], codigo: '444', descricao_nota: 'Arroz Parboilizado Tio Joao' }],
+    })
+    const linha = wrapper.findAllComponents(ItemFormRow)[0]
+    const chips = linha.findAll('[data-cy=item-sugestao]')
+    expect(chips.map(c => c.text())).toEqual(['Arroz'])
+
+    await chips[0].trigger('click')
+
+    expect(linha.props('modelValue')).toMatchObject({ item_id: 'item-1' })
+    expect(linha.find('[data-cy=item-sugestoes]').exists()).toBe(false)
+    expect(linha.find('[data-cy=item-vinculo-automatico]').exists()).toBe(false)
   })
 
   it('bloqueia o salvamento enquanto houver item da nota sem vínculo', async () => {
